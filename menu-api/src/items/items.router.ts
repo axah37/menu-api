@@ -2,7 +2,7 @@
  * Required External Modules and Interfaces
  */
  import express, { Request, Response } from "express";
- import * as ItemService from "./items.service";
+ import { ItemService } from "./items.service";
  import { BaseItem, Item } from "./item.interface";
 
  import { checkJwt } from "../middleware/authz.middleware";
@@ -13,6 +13,7 @@
  */
 export const itemsRouter = express.Router();
 
+const itemService = new ItemService();
 /**
  * Controller Definitions
  */
@@ -20,7 +21,7 @@ export const itemsRouter = express.Router();
 // GET items
 itemsRouter.get("/", async (req: Request, res: Response) => {
     try {
-      const items: Item[] = await ItemService.findAll();
+      const items: Item[] = await itemService.findAll();
   
       res.status(200).send(items);
     } catch (e) {
@@ -33,7 +34,7 @@ itemsRouter.get("/:id", async (req: Request, res: Response) => {
     const id: number = parseInt(req.params.id, 10);
   
     try {
-      const item: Item = await ItemService.find(id);
+      const item = await itemService.findItem(id);
   
       if (item) {
         return res.status(200).send(item);
@@ -56,7 +57,7 @@ itemsRouter.post(
     try {
       const item: BaseItem = req.body;
   
-      const newItem = await ItemService.create(item);
+      const newItem = await itemService.createItem(item);
   
       res.status(201).json(newItem);
     } catch (e) {
@@ -75,14 +76,14 @@ itemsRouter.put(
     try {
       const itemUpdate: Item = req.body;
   
-      const existingItem: Item = await ItemService.find(id);
+      const existingItem = await itemService.findItem(id);
   
       if (existingItem) {
-        const updatedItem = await ItemService.update(id, itemUpdate);
+        const updatedItem = await itemService.updateItem(id, itemUpdate);
         return res.status(200).json(updatedItem);
       }
   
-      const newItem = await ItemService.create(itemUpdate);
+      const newItem = await itemService.createItem(itemUpdate);
   
       res.status(201).json(newItem);
     } catch (e) {
@@ -97,7 +98,7 @@ itemsRouter.delete(
   async (req: Request, res: Response) => {
     try {
       const id: number = parseInt(req.params.id, 10);
-      await ItemService.remove(id);
+      await itemService.deleteItem(id);
   
       res.sendStatus(204);
     } catch (e) {

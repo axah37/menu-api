@@ -8,17 +8,21 @@ import helmet from "helmet";
 import { itemsRouter } from "./items/items.router"; 
 import { errorHandler } from "./middleware/error.middleware"
 import { notFoundHandler } from "./middleware/not-found.middleware"
+import { connect } from "./database/connection";
 
 dotenv.config();
 
 /**
  * App Variables
  */
-if (!process.env.PORT){
+if (!process.env.PORT || !process.env.CONNECTION_STRING){
+    console.error(`Missing environment variables!`);
     process.exit(1);
 }
 
 const PORT: number = parseInt(process.env.PORT as string, 10);
+
+const CONNECTION_STRING: string = process.env.CONNECTION_STRING;
 
 const app = express();
 
@@ -40,6 +44,12 @@ app.use(notFoundHandler)
 /**
  * Server Activation
  */
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
     console.log(`Listening on port ${PORT}`);
+    try{
+        await connect();
+        console.info(`Connected to Mongo!`);
+    } catch (err){
+        console.error(`Unable to connect to Mongo!`, err);
+    }
 });

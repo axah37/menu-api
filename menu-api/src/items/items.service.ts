@@ -3,72 +3,48 @@
  * Data Model Interfaces
  */
 import { BaseItem, Item } from "./item.interface";
-import { Items } from "./items.interface";
+import { ItemDao } from "./item-dao";
 
-/**
- * In-Memory Store
- */
-let items: Items = {
-    1: {
-        id: 1,
-        name: "Burger",
-        price: 599,
-        description: "Tasty",
-        image: "https://cdn.auth0.com/blog/whatabyte/burger-sm.png"
-    },
-    2: {
-        id: 2,
-        name: "Pizza",
-        price: 299,
-        description: "Cheesy",
-        image: "https://cdn.auth0.com/blog/whatabyte/pizza-sm.png"
-      },
-      3: {
-        id: 3,
-        name: "Tea",
-        price: 199,
-        description: "Informative",
-        image: "https://cdn.auth0.com/blog/whatabyte/tea-sm.png"
-      }
-};
+import { IItemDao } from "./item-dao";
+
+export interface IItemService{
+findAll(): Promise<Item[]>;
+findItem(id:number): Promise<Item|undefined>;
+createItem(newItem: BaseItem): Promise<Item|undefined>;
+updateItem(id: number, itemUpdate: BaseItem): Promise<Item|undefined>;
+deleteItem(id:number): Promise<null|void>;
+}
+
+export class ItemService implements IItemService{
+  private itemDao: IItemDao;
+
+  constructor(){
+    this.itemDao = new ItemDao();
+  }
 
 /**
  * Service Methods
  */
-export const findAll = async (): Promise<Item[]> => Object.values(items);
 
-export const find = async (id: number): Promise<Item> => items[id];
-
-export const create = async(newItem: BaseItem): Promise<Item> => {
+  findAll(): Promise<Item[]> {
+    return this.itemDao.getAllItems();
+  }
+  findItem(id: number): Promise<Item | undefined> {
+    const item = this.itemDao.getItem(id);
+    return item;
+  }
+  createItem(newItem: BaseItem): Promise<Item | undefined> {
     const id = new Date().valueOf();
-    items[id] = {
-        id,
-        ...newItem,
-    };
-    return items[id];
+    this.itemDao.saveItem({id, ...newItem})
+    return this.findItem(id);
+  }
+  updateItem(id: number, itemUpdate: BaseItem): Promise<Item | undefined> {
+    const result = this.itemDao.updateItem(id, {id, ...itemUpdate})
+    return this.findItem(id);
+  }
+  deleteItem(id: number): Promise<void | null> {
+    const result = this.itemDao.deleteItem(id);
+    return result;
+  }
+  
 }
-
-export const update = async (
-    id: number,
-    itemUpdate: BaseItem
-  ): Promise<Item | null> => {
-    const item = await find(id);
-  
-    if (!item) {
-      return null;
-    }
-  
-    items[id] = { id, ...itemUpdate };
-  
-    return items[id];
-  };
-
-  export const remove = async (id: number): Promise<null | void> => {
-    const item = await find(id);
-  
-    if (!item) {
-      return null;
-    }
-  
-    delete items[id];
-  };
